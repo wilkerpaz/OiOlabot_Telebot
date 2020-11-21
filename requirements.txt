@@ -1,0 +1,9 @@
+emoji==0.6.0
+feedparser==6.0.2
+Flask==1.1.2
+pytelegrambotapi==3.7.4
+python-dateutil==2.8.1
+python-decouple==3.3
+pytz==2020.4
+redis==3.5.3
+schedule==0.6.0
