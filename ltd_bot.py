@@ -26,15 +26,16 @@ _________________________________________________
 '''
 # -------  Controle de log  -------
 
+LOG = config('LOG')
 logger = telebot.logger
-telebot.logger.setLevel(logging.INFO)
+telebot.logger.setLevel(logging.ERROR)
 
 logging.basicConfig(format='%(asctime)s<%(threadName)s>%(name)s '
                            '(%(filename)s) %(levelname)s:%(lineno)d [%(funcName)] %(message)s')
 
 log = logging.getLogger('OiOlabot')
 
-log.setLevel(logging.ERROR)
+log.setLevel(LOG)
 
 # ===================================
 
@@ -44,7 +45,7 @@ log.setLevel(logging.ERROR)
 if len(sys.argv) > 1:
     if sys.argv[1] == 'dev':
         DEV_MOD = True
-        log.setLevel(logging.INFO)
+        log.setLevel(LOG)
     else:
         if 'gunicorn' in sys.argv[0]:
             DEV_MOD = False
