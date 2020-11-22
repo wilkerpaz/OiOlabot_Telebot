@@ -90,8 +90,6 @@ class BatchProcess(threading.Thread):
             for name in names_url:
                 chat_id = int(self.db.get_value_name_key(name, 'chat_id'))
                 if chat_id:
-                    if self.bot.get_me().username == '@LiturgiaDiaria_bot':
-                        print(chat_id, message)
                     result = envia_texto(bot=self.bot, chat_id=chat_id, text=message, parse_mode='html')
                     if not result:
                         self.errors(chat_id=chat_id, url=url)

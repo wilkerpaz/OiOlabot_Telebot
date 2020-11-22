@@ -73,6 +73,7 @@ ADMINS = ['26072030']  # Escreva a ID do seu Usuáro no telegram
 USER_ADMINS = []
 
 DB = config('DB')
+BOT_NAME_LD = config('BOT_NAME_LD')
 DEV_TOKEN = config('DEV_TOKEN')  # Tokens do Bot de Desenvolvimento
 PROD_TOKEN = config('PROD_TOKEN')  # Tokens do Bot de Produção
 
@@ -229,7 +230,7 @@ def _introduce(update):
     user who invited us.
     """
     me = bot.get_me()
-    if me.username == 'LiturgiaDiaria_bot':
+    if me.username == '@' + BOT_NAME_LD:
         _set_daily_liturgy(update)
         return
 
@@ -261,7 +262,8 @@ def _set_daily_liturgy(update):
     db.set_url_to_chat(chat_id=chat_id, chat_name=chat_name, url=url, user_id=user_id)
     envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
 
-    logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
+    print(user_id, chat_id, chat_name)
+    # logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
 
 '''
@@ -289,7 +291,8 @@ def all_update(u):
 def start(update):
     """ Prints help text """
     me = bot.get_me()
-    if me.username == 'LiturgiaDiaria_bot':
+    print(me.username)
+    if me.username == 'SejaBemVindo_bot':
         _set_daily_liturgy(update)
         return
 
@@ -351,7 +354,7 @@ def goodbye(update):
 # Set custom message
 def set_welcome(u):
     """ Sets custom welcome message """
-    args = u.text[u.entities[0].length + 1:] if u.entities else None
+    args = u.text.strip()[u.entities[0].length + 1:] if u.entities else None
     chat_id = u.chat.id
 
     # _check admin privilege and group context
@@ -377,7 +380,7 @@ def set_welcome(u):
 # Set custom message
 def set_goodbye(update):
     """ Enables and sets custom goodbye message """
-    args = update.text[update.entities[0].length + 1:] if update.entities else None
+    args = update.text.strip()[update.entities[0].length + 1:] if update.entities else None
     chat_id = update.chat.id
 
     # _check admin privilege and group context
@@ -459,77 +462,77 @@ def command_control(update, command):
             envia_texto(bot=bot, chat_id=chat_id, text='Got it!', parse_mode='HTML')
 
 
-# Avaliar esta função
 def get_chat_by_username(update, user_name=None):
     get_chat = None
     try:
         if user_name:
             user_name = user_name if user_name[0] == '@' else '@' + str(user_name)
-        chat_id = update.chat.id if user_name == '@this' else user_name
+        chat_id = update.chat.id if user_name == '@this' or not user_name else user_name
         get_chat = bot.get_chat(chat_id=chat_id)
-    except telebot.apihelper.ApiException as e:
+    except telebot.apihelper.ApiException as _:
         if user_name:
-            update.reply_text(f'I cant resolved username {user_name}')
+            text = f'I cant resolved username {user_name}'
+            envia_texto(bot=bot, chat_id=update.chat.id, text=text, parse_mode='HTML')
         logger.warning(f"{e}")
 
     user = {}
     if get_chat:
-        user.update({'id': str(get_chat.id) or None})
-        user.update({'title': get_chat.title}) if get_chat.title \
-            else user.update({'first_name': get_chat.first_name})
-        user.update({'description': get_chat.description}) if get_chat.description \
-            else user.update({'last_name': get_chat.last_name})
-        user.update({'username': '@' + get_chat.username if get_chat.username else None})
-
+        user.update({'id': str(get_chat.id) if get_chat.id else None})
+        user.update({'type': str(get_chat.type)}) if get_chat.type else None
+        user.update({'title': get_chat.title}) if get_chat.title else None
+        user.update({'username': '@' + get_chat.username}) if get_chat.username else None
+        user.update({'first_name': get_chat.first_name if get_chat.first_name else None})
+        user.update({'last_name': get_chat.last_name if get_chat.last_name else None})
+        user.update({'description': get_chat.description if get_chat.description else None})
     return user if get_chat else None
 
 
+@bot.message_handler(commands=['me'])
 def get_user_info(update):
-    user_id = update.from_user.id
     chat_id = update.chat.id
-    args = update.text[update.entities[0].length + 1:].split(' ') if update.entities else None
+    args = update.text.strip()[update.entities[0].length + 1:].split(' ')[0] if update.entities else None
     command = update.text[1:update.entities[0].length] or None
 
-    if args:
-        user_input = args[0]
-        get_chat = get_chat_by_username(update, user_name=user_input) if user_input else None
+    if args != '':
+        get_chat = get_chat_by_username(update, user_name=args) or None
 
     else:
-        get_chat = get_chat_by_username(update, user_name=user_id)
+        get_chat = get_chat_by_username(update)
 
     if get_chat:
+        get_chat['id'] = f"<code>{get_chat['id']} </code>"
         text = '\n'.join(f'{k}: {v}' for k, v in get_chat.items())
 
         if text and command == 'me':
             envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
 
 
-def get_id(update):
-    args = update.text[update.entities[0].length + 1:] if update.entities else None
-    from_user = update.from_user
-    chat_id = update.chat.id
-
-    if str(args[0])[:1] == '@':
-        id_user = args
-
-    elif not str(args[0]).find('/') < 0:
-        id_user = '@' + str(args).split('/')[-1]
-    else:
-        id_user = '@' + str(args)
-    try:
-        get_id_user = bot.get_chat(chat_id=id_user)
-    except telebot.apihelper.ApiException as e:
-        error(e)
-        return None
-
-    if get_id_user:
-        return {'user_id': get_id_user['id'], 'user_name': "@" + str(get_id_user['username'])}
-
-    else:
-        text = "Sorry, " + from_user.first_name + \
-               "! I already have that group name " + id_user + " with stored in your subscriptions."
-        envia_texto(bot=bot, chat_id=chat_id, text=text)
-        return None
+# def get_id(update):
+#     args = update.text.strip()[update.entities[0].length + 1:].split(' ')[0] if update.entities else None
+#     from_user = update.from_user
+#     chat_id = update.chat.id
+#
+#     if str(args)[:1] == '@':
+#         id_user = args
+#
+#     elif not str(args).find('/') < 0:
+#         id_user = '@' + str(args).split('/')[-1]
+#     else:
+#         id_user = '@' + str(args)
+#     try:
+#         get_id_user = bot.get_chat(chat_id=id_user)
+#     except telebot.apihelper.ApiException as e:
+#         error(e)
+#         return None
+#
+#     if get_id_user:
+#         return {'user_id': get_id_user['id'], 'user_name': "@" + str(get_id_user['username'])}
+#
+#     else:
+#         text = "Sorry, " + from_user.first_name + \
+#                "! I already have that group name " + id_user + " with stored in your subscriptions."
+#         envia_texto(bot=bot, chat_id=chat_id, text=text)
+#         return None
 
 
 def feed_url(update, url, **chat_info):
@@ -562,7 +565,7 @@ def add_url(update):
     """
     Adds a rss subscription to user
     """
-    args = update.text[update.entities[0].length + 1:].split(' ') if update.entities else None
+    args = update.text.strip()[update.entities[0].length + 1:].split(' ') if update.entities else None
     chat_id = update.chat.id
 
     # _check admin privilege and group context
@@ -576,7 +579,7 @@ def add_url(update):
            "/addurl http://www.feedforall.com/sample.xml \n\n" \
            "/addurl @username http://www.feedforall.com/sample.xml "
 
-    if len(args) > 2 or not args:
+    if len(args) > 2 or not args or args[0] == '':
         envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
         return
 
@@ -658,7 +661,7 @@ def remove_url(update):
     """
     Removes an rss subscription from user
     """
-    args = update.text[update.entities[0].length + 1:].split(' ') if update.entities else None
+    args = update.text.strip()[update.entities[0].length + 1:].split(' ') if update.entities else None
     chat_id = update.chat.id
 
     text = "Sorry! I could not remove the entry! " \
@@ -668,24 +671,27 @@ def remove_url(update):
            "/removeurl http://www.feedforall.com/sample.xml \n\n" \
            "/removeurl @username http://www.feedforall.com/sample.xml "
 
-    if len(args) > 2 or not args:
+    if len(args) > 2 or not args or args == '':
         envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
         return
 
     user_id = update.from_user.id
-    chat_name = args[0] if len(args) == 2 else update.from_user.first_name
+    chat_name = args[0] if len(args) == 2 else update.from_user.username if update.from_user.username else \
+        update.from_user.first_name
     logger.error(f'remove_url {str(user_id)} {chat_name}')
-    chat_id = db.get_chat_id_for_chat_name(user_id, chat_name) if chat_name else update.chat.id
+    chat_id_db = db.get_chat_id_for_chat_name(user_id, chat_name) if chat_name else update.chat.id
     url = args[1] if len(args) == 2 else args[0]
 
-    if chat_id is None:
+    if chat_id_db is None:
         text = "Don't exist chat " + chat_name + '\n' + text
+        print('chat_id is None ', chat_id)
         envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
     else:
         exist_url = db.exist_url_to_chat(user_id, chat_id, url)
         if not exist_url:
             chat_name = chat_name or update.from_user.first_name
             text = "Don't exist " + url + " for chat " + chat_name + '\n' + text
+            print('not exist_url ', chat_id)
             envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
             result = None
         else:
@@ -697,6 +703,7 @@ def remove_url(update):
             text = "I can not find an entry with label " + \
                    url + " in your subscriptions! Please check your subscriptions using " \
                          "/listurl and use the delete command again!"
+        print('else ', chat_id)
         envia_texto(bot=bot, chat_id=chat_id, text=text)
 
     names_url = db.find_names(url)
@@ -707,7 +714,7 @@ def remove_url(update):
 
 @bot.message_handler(commands=['getkey'])
 def get_key(update):
-    args = update.text[update.entities[0].length + 1:].split(' ') if update.entities else None
+    args = update.text.strip()[update.entities[0].length + 1:].split(' ') if update.entities else None
     chat_id = update.chat.id
     if len(args) == 1:
         keys = db.find_names(args[0])
@@ -718,7 +725,7 @@ def get_key(update):
 
 @bot.message_handler(commands=['removekey'])
 def remove_key(update):
-    args = update.text[update.entities[0].length + 1:].split(' ') if update.entities else None
+    args = update.text.strip()[update.entities[0].length + 1:].split(' ') if update.entities else None
     chat_id = update.chat.id
     text = 'I removed '
     if len(args) == 1:

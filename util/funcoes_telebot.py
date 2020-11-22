@@ -110,8 +110,8 @@ def envia_texto(bot, chat_id, text, funcao_trata='', **kwargs):
     except Exception as e:
         if type(e).__name__ == 'ConnectionError':
             logging.info(f'Ocorrido o erro ao enviar text: {e}')
-            time.sleep(3)
-            envia_texto(chat_id, text, **kwargs)
+            # time.sleep(3)
+            # envia_texto(chat_id, text, **kwargs)
         return False
 
 
