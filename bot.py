@@ -259,7 +259,7 @@ def _set_daily_liturgy(update):
     text = 'You will receive the daily liturgy every day.\nFor more commands click /help'
 
     db.set_url_to_chat(chat_id=chat_id, chat_name=chat_name, url=url, user_id=user_id)
-    update.reply_text(text=text, quote=False)
+    envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
 
     logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
