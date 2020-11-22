@@ -254,6 +254,7 @@ def _set_daily_liturgy(update):
     chat_name = '@' + update.chat.username or '@' + update.from_user.username \
                 or update.from_user.first_name
     chat_title = update.chat.title
+    print(update.chat)
     user_id = update.from_user.id
     url = 'http://feeds.feedburner.com/evangelhoddia/dia'
     text = 'You will receive the daily liturgy every day.\nFor more commands click /help'
@@ -261,7 +262,7 @@ def _set_daily_liturgy(update):
     db.set_url_to_chat(chat_id=chat_id, chat_name=chat_name, url=url, user_id=user_id)
     envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
 
-    logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
+    # logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
 
 '''
