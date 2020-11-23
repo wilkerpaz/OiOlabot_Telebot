@@ -559,6 +559,7 @@ def add_url(update):
     """
     args = update.text.strip()[update.entities[0].length + 1:].split(' ') if update.entities else None
     chat_id = update.chat.id
+    user_id = update.from_user.id
 
     # _check admin privilege and group context
     if chat_id < 0:
@@ -572,7 +573,7 @@ def add_url(update):
            "/addurl @username http://www.feedforall.com/sample.xml "
 
     if len(args) > 2 or not args or args[0] == '':
-        envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
+        envia_texto(bot=bot, chat_id=user_id, text=text, parse_mode='HTML')
         return
 
     elif len(args) == 2:
@@ -581,7 +582,7 @@ def add_url(update):
         chat_info = get_chat_by_username(update, chat_name)
         text = "I don't have access to chat " + chat_name + '\n' + text
         if chat_info is None:
-            update.reply_text(text=text, quote=False)
+            envia_texto(bot=bot, chat_id=user_id, text=text, parse_mode='HTML')
         else:
             chat_info = {'chat_id': chat_info['id'], 'chat_name': chat_info['username']}
             feed_url(update, url, **chat_info)
@@ -593,7 +594,6 @@ def add_url(update):
         chat_title = update.chat.title if update.chat.title else None
 
         chat_name = user_name or chat_title or first_name
-        user_id = update.from_user.id
         chat_info = {'chat_id': chat_id, 'chat_name': chat_name, 'user_id': user_id}
 
         feed_url(update, url, **chat_info)
