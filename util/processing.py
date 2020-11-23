@@ -12,7 +12,7 @@ from util.feedhandler import FeedHandler
 from util.funcoes_telebot import envia_texto
 
 logger = logging.getLogger(__name__)
-logging.getLogger('util.processing').setLevel(logging.DEBUG)
+logging.getLogger('util.processing').setLevel(logging.ERROR)
 
 
 class BatchProcess(threading.Thread):
@@ -44,7 +44,7 @@ class BatchProcess(threading.Thread):
         duration = time_ended - time_started
         info_bot = self.bot.get_me()
         bot = info_bot.first_name
-        logger.warning(f"Finished updating! Parsed {str(len(urls))} rss feeds in {str(duration)}! {bot}")
+        logger.info(f"Finished updating! Parsed {str(len(urls))} rss feeds in {str(duration)}! {bot}")
         return True
 
     def update_feed(self, url):
