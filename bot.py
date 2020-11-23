@@ -254,16 +254,14 @@ def _set_daily_liturgy(update):
     chat_id = update.chat.id
     chat_name = '@' + update.chat.username or '@' + update.from_user.username \
                 or update.from_user.first_name
-    chat_title = update.chat.title
+    chat_title = update.chat.title or update.from_user.first_name
     user_id = update.from_user.id
     url = 'http://feeds.feedburner.com/evangelhoddia/dia'
     text = 'You will receive the daily liturgy every day.\nFor more commands click /help'
 
     db.set_url_to_chat(chat_id=chat_id, chat_name=chat_name, url=url, user_id=user_id)
     envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
-
-    print(user_id, chat_id, chat_name)
-    # logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
+    logger.info(f'Invited by {user_id} to chat {chat_id} ({escape(chat_title)})')
 
 
 '''
@@ -281,17 +279,11 @@ _________________________________________________
 '''
 
 
-@bot.message_handler(content_types=['new_chat_member'])
-def all_update(u):
-    print(u)
-
-
 @bot.message_handler(commands=['start', 'entrar', 'iniciar', 'help'])
 # Print help text
 def start(update):
     """ Prints help text """
     me = bot.get_me()
-    print(me.username)
     if me.username == 'SejaBemVindo_bot':
         _set_daily_liturgy(update)
         return
@@ -684,14 +676,12 @@ def remove_url(update):
 
     if chat_id_db is None:
         text = "Don't exist chat " + chat_name + '\n' + text
-        print('chat_id is None ', chat_id)
         envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
     else:
         exist_url = db.exist_url_to_chat(user_id, chat_id, url)
         if not exist_url:
             chat_name = chat_name or update.from_user.first_name
             text = "Don't exist " + url + " for chat " + chat_name + '\n' + text
-            print('not exist_url ', chat_id)
             envia_texto(bot=bot, chat_id=chat_id, text=text, parse_mode='HTML')
             result = None
         else:
@@ -703,11 +693,9 @@ def remove_url(update):
             text = "I can not find an entry with label " + \
                    url + " in your subscriptions! Please check your subscriptions using " \
                          "/listurl and use the delete command again!"
-        print('else ', chat_id)
         envia_texto(bot=bot, chat_id=chat_id, text=text)
 
     names_url = db.find_names(url)
-    print(names_url)
     if len(names_url) == 1:
         db.del_names(names_url)
 
@@ -820,10 +808,8 @@ if __name__ == "__main__":
             feed.stop()
             bot.stop_bot()
         except URLError as e:
-            print('####urllib.error.URLError', e)
             run_bot(restart=True)
         except gaierror as e:
-            print('####GAIERROR', e)
             run_bot(restart=True)
 
     else:

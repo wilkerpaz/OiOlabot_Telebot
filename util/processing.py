@@ -87,13 +87,16 @@ class BatchProcess(threading.Thread):
     def send_newest_messages(self, message, url):
         if not self._finished.isSet():
             names_url = self.db.get_names_for_user_activated(url)
+            update_url = False
             for name in names_url:
                 chat_id = int(self.db.get_value_name_key(name, 'chat_id'))
                 if chat_id:
                     result = envia_texto(bot=self.bot, chat_id=chat_id, text=message, parse_mode='html')
                     if not result:
                         self.errors(chat_id=chat_id, url=url)
-                    return result
+                    else:
+                        update_url = True
+            return update_url
 
     def errors(self, chat_id, url):
         """ Error handling """
